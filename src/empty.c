@@ -13,7 +13,7 @@ MFR *mfrEmpty(void)
 	MFR *mfr;
 
 	if(verbose>1){
-	   fprintf(stderr,"Empty graph\n");
+	   Rprintf("Empty graph\n");
 	}
 	mfr=makeMFR(1,1);
 	mfr->emptygraph = 1;

@@ -4,9 +4,9 @@ extern int verbose;
 
 int isCompleteBipartite(Graph *g, int *N, int *M)
 {
-   int i,j,n=g->n,a,b;
+   int i,j,n=g->n,a=0,b=0;
 	int *degrees=g->degrees;
-	int *part1,*part2;
+	static int *part1,*part2;
 
 	for(i=0;i<n;i++){
 	   if(degrees[i]>0){
@@ -24,7 +24,7 @@ int isCompleteBipartite(Graph *g, int *N, int *M)
 			for(j=0;j<n;j++){
 				a += part1[j];
 				b += part2[j];
-				if(part1[j]==1 & part2[j]==1){
+				if((part1[j]==1) & (part2[j]==1)){
 				   free(part1);
 					free(part2);
 					return(0);
@@ -55,7 +55,7 @@ MFR *mfrCompleteBipartite(int n,int m)
    unsigned long **M;
 
 	if(verbose>1){
-	   fprintf(stderr,"Complete bipartite graph on %d+%d vertices\n",n,m);
+	   Rprintf("Complete bipartite graph on %d+%d vertices\n",n,m);
 	}
 	mfr = makeMFR(m+n-1,2);
 

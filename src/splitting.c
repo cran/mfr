@@ -43,7 +43,7 @@ int simplicialVertex(Graph *g, int start)
 
 Graph *subgraph(Graph *g, int *vertices)
 {
-	int i,j;
+	int i;
 	int n=g->n,s=g->s,s1;
 	int v,w;
 	Graph *h;
@@ -112,7 +112,8 @@ int splittingEdge(Graph *g)
 	if(edge==(-1) && NOCODEAPPROX==1){
 		APPROXBETTIS++;
 		if(ATRANDOM==1){
-			edge = random() % s;
+			/* edge = random() % s; */
+			edge = floor(s*unif_rand());
 		}
 		else{
 		   Graph *G;
@@ -134,9 +135,7 @@ int splittingEdge(Graph *g)
 					edge = i;
 				}
 			}
-			/* fprintf(stderr,"Best: %d, edge: %d (%d:%d)\n",best,edge,s,n);*/
 			Free(N);
-			/* fprintf(stderr,"Freed N\n");*/
 		}
 	}
 	return(edge);
@@ -151,7 +150,6 @@ void splittingEdges(Graph *g, int *splitting)
 	int v,w;
 	int **edges;
 	int *N1,*N2;
-	int edge;
 
 	edges = g->edges;
 
@@ -159,7 +157,6 @@ void splittingEdges(Graph *g, int *splitting)
 	   return;
 	}
 
-	edge=-1;
 	for(i=0;i<s;i++){
 	   v=edges[i][0];
 	   w=edges[i][1];
@@ -219,7 +216,7 @@ int chooseEdge(Graph *g)
    int v,w;
 	int i,s=g->s;
 	int *degrees=g->degrees;
-	int edge,best;
+	static int edge,best;
 
 	best=0;
 	v = simplicialVertex(g,0);
@@ -307,7 +304,7 @@ int myaccess(unsigned long **A, int i, int j, int nrow, int ncol)
 }
 
 MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
-                  char *tempname)
+                  char *tempname,int quiet)
 {
 	int i,j;
 	int n;
@@ -329,8 +326,8 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 	else NOCODEAPPROX=1;
 
 	if(verbose){
-	   fprintf(stderr,"MFR: Depth = %d\n",depth);
-		fprintf(stderr,"\tn = %d, s = %d\n",numberVerticesActive(g),g->s);
+	   Rprintf("MFR: Depth = %d\n",depth);
+		Rprintf("\tn = %d, s = %d\n",numberVerticesActive(g),g->s);
 	}
 
 	if(isEmpty(g)){
@@ -346,7 +343,8 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 			else N[i]=0;
 		}
 		G = subgraph(g,N);
-		mfra = mfrSplitting(G, depth+1, numCombs,punted, nocode, tempname);
+		mfra = mfrSplitting(G, depth+1, numCombs,punted, nocode, tempname,
+		                    quiet);
 		freeGraph(&G);
 		for(j=2;j<=m;j++){
 			for(i=0;i<g->n;i++){
@@ -354,7 +352,8 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 				else N[i]=0;
 			}
 			G = subgraph(g,N);
-			mfrb = mfrSplitting(G, depth+1, numCombs,punted, nocode, tempname);
+			mfrb = mfrSplitting(G, depth+1, numCombs,punted, nocode, tempname,
+			                    quiet);
 			freeGraph(&G);
 			combineGraded(mfra,mfrb);
 			freeMFR(&mfrb);
@@ -375,24 +374,20 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 			return(mfrCycle(g->n));
 		}
 		if(isCompleteBipartite(g,&n1,&n2)){
-			/*
-			fprintf(stderr,"completebipartite %d %d\n",n1,n2);
-			for(i=0;i<g->s;i++)
-				fprintf(stderr,"%d %d\n",g->edges[i][0],g->edges[i][1]);
-			*/
 			return(mfrCompleteBipartite(n1,n2));
 		}
 		edge = chooseEdge(g);
 		if(edge>(-1)){
 			G = removeEdge(g,edge);
 			if(verbose>2){
-				fprintf(stderr,"Removed edge %d: (%d,%d)\n",edge,
+				Rprintf("Removed edge %d: (%d,%d)\n",edge,
 						  g->edges[edge][0],
 						  g->edges[edge][1]);
 			}
-			mfra = mfrSplitting(G,depth+1,numCombs,punted,nocode,tempname);
+			mfra = mfrSplitting(G,depth+1,numCombs,punted,nocode,tempname,
+			                    quiet);
 			if(verbose>2){
-				fprintfMFR(stderr,mfra);
+				fprintfMFR(mfra);
 			}
 			freeGraph(&G);
 			if(g->degrees[g->edges[edge][0]]>
@@ -403,13 +398,13 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 				v = g->edges[edge][1];
 			}
 			if(verbose>2){
-				fprintf(stderr,"Vertex %d chosen: degree = %d\n",v,g->degrees[v]);
+				Rprintf("Vertex %d chosen: degree = %d\n",v,g->degrees[v]);
 			}
 			N = neighborhood(g,v);
 			m=g->degrees[v]+1;
 			if(g->n==m){
 				if(verbose>2){
-					fprintf(stderr,"\tNeighborhood is the full graph\n");
+					Rprintf("\tNeighborhood is the full graph\n");
 				}
 				Free(N);
 				mfrb = mfrEmpty();
@@ -428,17 +423,18 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 				if(verbose>2){
 					a = numberVerticesActive(g);
 					b = numberVerticesActive(G);
-					fprintf(stderr,"Removed %d vertices, %d remaining\n",
+					Rprintf("Removed %d vertices, %d remaining\n",
 							  a-b,b);
 				}
-				mfrb = mfrSplitting(G,depth+1,numCombs,punted,nocode,tempname);
+				mfrb = mfrSplitting(G,depth+1,numCombs,punted,nocode,tempname,
+				                    quiet);
 				if(verbose>2){
-					fprintfMFR(stderr,mfrb);
+					fprintfMFR(mfrb);
 				}
 				freeGraph(&G);
 			}
 			if(verbose>1){
-				fprintf(stderr,"Patching the MFR up at depth %d\n",depth);
+				Rprintf("Patching the MFR up at depth %d\n",depth);
 			}
 			A = mfra->graded;
 			B = mfrb->graded;
@@ -446,11 +442,11 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 			pd = max(mfra->pd,mfrb->pd+n+1);
 			reg = max(2,max(mfra->reg,mfrb->reg+1));
 			if(verbose>1){
-				fprintf(stderr,"pd=%d, reg=%d\n",pd,reg);
+				Rprintf("pd=%d, reg=%d\n",pd,reg);
 				if(mfra->emptygraph==1)
-					fprintf(stderr,"A is empty\n");
+					Rprintf("A is empty\n");
 				if(mfrb->emptygraph==1)
-					fprintf(stderr,"B is empty\n");
+					Rprintf("B is empty\n");
 			}
 
 			mfr = makeMFR(pd,reg);
@@ -458,7 +454,7 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 
 			(*numCombs)++;
 			if(verbose>1){
-				fprintf(stderr,"Node: %d\n",*numCombs); 
+				Rprintf("Node: %d\n",*numCombs); 
 			}
 			M[2][2] = s;
 			if(pd>1){
@@ -483,8 +479,8 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 			}
 			M[1][1] = 1;
 			if(verbose>2){
-				fprintf(stderr,"Combined at depth %d:\n",depth);
-				fprintfMFR(stderr,mfr);
+				Rprintf("Combined at depth %d:\n",depth);
+				fprintfMFR(mfr);
 			}
 			freeMFR(&mfra);
 			freeMFR(&mfrb);
@@ -492,14 +488,15 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 		}
 		else{
 			if(verbose>0){
-				fprintf(stderr,"No simplicial vertices (or splitting edges)\n");
+				Rprintf("No simplicial vertices (or splitting edges)\n");
 			}
 			if(nocode){
-				return(mfrSplitting(g, depth, numCombs,punted, nocode,tempname));
+				return(mfrSplitting(g, depth, numCombs,punted, nocode,tempname,
+				                    quiet));
 			}
 			else{
 				(*punted)++;
-				return(singular(g,tempname));
+				return(singular(g,tempname,quiet));
 			}
 		}
 	}

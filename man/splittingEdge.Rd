@@ -28,7 +28,7 @@ Huy Tai Ha and Adam Van Tuyl, "Splittable ideals and the resolutions of monomial
 ideals", J. Algebra, 309, 405-425, 2007.
 }
 \author{
-David Marchette, dmarchette@gmail.com
+David Marchette, david.marchette@navy.mil
 }
 
-\keyword{ math }
+\keyword{ graphs }

@@ -27,7 +27,7 @@ MFR *mfrStar(int d)
    unsigned long **M;
 
 	if(verbose>1){
-	   fprintf(stderr,"Star graph on %d vertices\n",d+1);
+	   Rprintf("Star graph on %d vertices\n",d+1);
 	}
 	mfr = makeMFR(d,2);
 

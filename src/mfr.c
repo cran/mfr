@@ -6,7 +6,7 @@ int APPROXBETTIS;
 
 void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
          double *graded, int *pd, int *reg, int *punted, int *NOCODE,
-			int *seed, char **TEMPNAME)
+			int *atrandom,char **TEMPNAME, int *QUIET)
 {
 	int i,j,k,s=*S,n=*N;
 	MFR *mfr;
@@ -14,18 +14,17 @@ void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
 	Graph *g;
 	int nocode=*NOCODE;
 	char *tempname;
+	int quiet=*QUIET;
+
+	GetRNGstate();
 
 	tempname=*TEMPNAME;
 	APPROXBETTIS=0;
 
 	if(nocode){
-		if(*seed<=0){
-		   ATRANDOM=0;
-		}
-		else{
-			srandom(*seed);
-			ATRANDOM=1;
-		}
+		ATRANDOM = *atrandom;
+	} else {
+	   ATRANDOM=0;
 	}
 
 	*NC=0;
@@ -40,7 +39,7 @@ void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
 	}
    g = makeGraph(edges,s,n);
 
-	mfr = mfrSplitting(g,0,NC,punted,nocode,tempname);
+	mfr = mfrSplitting(g,0,NC,punted,nocode,tempname,quiet);
 	*pd = mfr->pd;
 	*reg = mfr->reg;
 
@@ -56,5 +55,7 @@ void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
 
 	freeGraph(&g);
 	freeMFR(&mfr);
+
+	PutRNGstate();
 
 }

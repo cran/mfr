@@ -1,10 +1,17 @@
 #include <string.h>
 #include "splitting.h"
 
+#ifdef __unix__ 
+#define SINGULAR "Singular"
+#elif defined _WIN32 
+#define SINGULAR "bash.exe Singular"
+#endif
+
 extern int verbose;
 
 void Singular(int *edges1, int *edges2, int *N, int *S, int *V,
-         double *graded, int *pd, int *reg, int *punted, char **TEMPNAME)
+         double *graded, int *pd, int *reg, int *punted, char **TEMPNAME,
+			int *QUIET)
 {
 	int i,j,k;
    int **edges;
@@ -12,6 +19,7 @@ void Singular(int *edges1, int *edges2, int *N, int *S, int *V,
 	Graph *g;
 	MFR *mfr;
 	char *tempname;
+	int quiet=*QUIET;
 
 	tempname = *TEMPNAME;
 	verbose=*V;
@@ -23,7 +31,7 @@ void Singular(int *edges1, int *edges2, int *N, int *S, int *V,
 		edges[i][1] = edges2[i]-1;
 	}
 	g = makeGraph(edges,s,n);
-	mfr = singular(g,tempname);
+	mfr = singular(g,tempname,quiet);
 	(*punted)++;
 	*pd = mfr->pd;
 	*reg = mfr->reg;
@@ -41,7 +49,7 @@ void Singular(int *edges1, int *edges2, int *N, int *S, int *V,
 
 }
 
-MFR *singular(Graph *g, char *tempname)
+MFR *singular(Graph *g, char *tempname, int quiet)
 {
 	int i,j,n=g->n,s=g->s;
 	int pd,reg;
@@ -51,29 +59,35 @@ MFR *singular(Graph *g, char *tempname)
 	char tempout[200];
 	char str[1100];
 	int **edges=g->edges;
+	int junk;
+	char *junkc;
+	double t1,t2;
 
 
 	if(verbose>0){
-	   fprintf(stderr,"Calling Singular\n");
+	   Rprintf("Calling Singular\n");
 	}
-	if(n>=14){
-		fprintf(stderr,"WARNING: Calling Singular with a (%d,%d) graph\n",n,s);
-		fprintf(stderr,"Estimated time to complete: %f minutes\n",
-		        exp(1.5*n-15.)/60.);
-		fprintf(stderr,"(Estimate from a 2.1 Ghz laptop)\n");
-		fprintf(stderr,"This estimate is quite crude, and probably high\n");
-		fprintf(stderr,"(wildly innaccurate is another way of saying it)\n");
-		fprintf(stderr,"if the graph is not dense.\n");
-		if(n>19){
-		   fprintf(stderr,
-			   "However, with n=%d, it is likely to take a VERY long time\n",
-				n);
+	if(!quiet){
+		if((n>=20) && (s>=25)){
+			Rprintf("WARNING: Calling Singular with a (%d,%d) graph\n",n,s);
+			Rprintf("This may take a long time.\n");
+			t1 = exp(s/3-7.5367);
+			t2 = exp(0.3669*s-6.8894);
+			if(t1>120){
+				Rprintf("A very crude estimate is: between %lf and %lf minutes.\n",
+				   t1/60,t2/60);
+			} else {
+				Rprintf("A very crude estimate is: between %lf and %lf seconds.\n",
+				   t1,t2);
+			}
+		}
+		if((s>=35) && (n>=30)){
+		   Rprintf("You are in uncharted here.\n");
 		}
 	}
 	if((fp=fopen(tempname,"w"))==NULL){
-	   fprintf(stderr,"Could not open temporary Singular input file %s\n",
+	   error("Could not open temporary Singular input file %s\n",
 		        tempname);
-	   exit(3);
 	}
 
 	fprintf(fp,"ring R=0, (x(1..%d)), dp;\n",n);
@@ -84,32 +98,35 @@ MFR *singular(Graph *g, char *tempname)
 		}
 	}
 	fprintf(fp,"x(%d)*x(%d);\n",edges[s-1][0]+1,edges[s-1][1]+1);
-	fprintf(fp,"resolution fI=mres(I,0);\n");
+	fprintf(fp,"resolution fI=res(I,0);\n");
 	fprintf(fp,"print(betti(fI),\"betti\");");
 	fprintf(fp,"quit;\n");
 	fclose(fp);
 	sprintf(tempout,"%s.out",tempname);
 
-	sprintf(str,"Singular < %s > %s",tempname,tempout);
-	system(str);
+	sprintf(str,"%s < %s > %s",SINGULAR,tempname,tempout);
+	junk = system(str);
+	if(junk == -1) {
+	  error("Call to singular failed. See %s for the input and %s for output\n",
+	  tempname,tempout);
+	}
 	remove(tempname);
 
 	if((fp=fopen(tempout,"r")) == NULL){
-	   fprintf(stderr,"Could not open temporary output file %s\n",tempout);
-		exit(4);
+	   error("Could not open temporary output file %s\n",tempout);
 	}
 	pd = 0;
 	while(fgets(str,1000,fp) != NULL){
 	   if(strstr(str,"FB Mathematik")){
-		   fgets(str,1000,fp);
+		   junkc = fgets(str,1000,fp);
 			for(i=strlen(str)-2;str[i]!=' ';i--);
-			sscanf(&str[i],"%d",&pd);
+			junk = sscanf(&str[i],"%d",&pd);
 			pd++;
-		   fgets(str,1000,fp);
-		   fgets(str,1000,fp);
+		   junkc = fgets(str,1000,fp);
+		   junkc = fgets(str,1000,fp);
 			while(strstr(str,"-----") == NULL){
-			   fscanf(fp,"%d:",&reg);
-				fgets(str,1000,fp);
+			   junk = fscanf(fp,"%d:",&reg);
+				junkc = fgets(str,1000,fp);
 			}
 			reg++;
 			break;
@@ -119,18 +136,17 @@ MFR *singular(Graph *g, char *tempname)
 	pd--;
 	mfr = makeMFR(pd,reg);
 	if((fp=fopen(tempout,"r")) == NULL){
-	   fprintf(stderr,"Could not open temporary output file %s\n",tempout);
-		exit(4);
+	   error("Could not open temporary output file %s\n",tempout);
 	}
 	M = mfr->graded;
 	while(fgets(str,1000,fp) != NULL){
 	   if(strstr(str,"FB Mathematik")){
-		   fgets(str,1000,fp);
-		   fgets(str,1000,fp);
+		   junkc = fgets(str,1000,fp);
+		   junkc = fgets(str,1000,fp);
 			for(i=0;i<reg;i++){
-				fscanf(fp,"%*d:");
+				junk = fscanf(fp,"%*d:");
 				for(j=0;j<=pd;j++){
-				   fscanf(fp,"%ld",&M[i+1][j+1]);
+				   junk = fscanf(fp,"%ld",&M[i+1][j+1]);
 				}
 			}
 			break;

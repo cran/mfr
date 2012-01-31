@@ -21,10 +21,10 @@ This generates a random tree.
 a graph.
 }
 \author{
-David Marchette, dmarchette@gmail.com
+David Marchette, david.marchette@navy.mil
 }
 
 \seealso{
-\code{\link{graphs}}, \code{\link{rg}}
+\code{\link{rchordal}}
 }
-\keyword{ math }
+\keyword{ graphs }

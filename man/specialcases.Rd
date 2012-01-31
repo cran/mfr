@@ -65,10 +65,10 @@ Marchette and Johannsen, "Betti numbers of graphs", submitted for publication
 in Statistical Analysis and Data Mining.
 }
 \author{
-David Marchette, dmarchette@gmail.com
+David Marchette, david.marchette@navy.mil
 }
 
 \seealso{
 \code{\link{mfr}}
 }
-\keyword{ math }
+\keyword{ graphs }

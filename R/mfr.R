@@ -1,10 +1,3 @@
-removeIsolates <- function(g)
-{
-	if(is.null(g)) return(NULL)
-   v <- V(g)
-	matrix(match(g,v),ncol=2)
-}
-
 combineGraded <- function(gra,grb)
 {
 	N <- nrow(gra)+nrow(grb)
@@ -22,10 +15,13 @@ combineGraded <- function(gra,grb)
 	G[2:N,2:M]
 }
 
-mfr1 <- function(g,verbose=TRUE,nocode=FALSE,seed=33632)
+mfr1 <- function(g,verbose=TRUE,nocode=FALSE,atrandom=FALSE,quiet=FALSE)
 {
-   n <- Order(g)
-	s <- Size(g)
+   n <- vcount(g)
+	s <- ecount(g)
+
+	if(s==0) 
+	   return(list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0))
 
 	graded <- rep(0,n*n)
 
@@ -34,10 +30,11 @@ mfr1 <- function(g,verbose=TRUE,nocode=FALSE,seed=33632)
 	   cat("Graph = (",n,",",s,")\n",sep="")
 		cat("tempname =",tempname,"\n")
 	}
+	edges <- get.edgelist(g)+1
 	punted <- 0
 	retval <- .C("mfr",
-					 edges1 = as.integer(g[,1]),
-					 edges2 = as.integer(g[,2]),
+					 edges1 = as.integer(edges[,1]),
+					 edges2 = as.integer(edges[,2]),
 					 N = as.integer(n),
 					 S = as.integer(s),
 					 NC = integer(1),
@@ -47,8 +44,9 @@ mfr1 <- function(g,verbose=TRUE,nocode=FALSE,seed=33632)
 					 reg = integer(1),
 					 punted = as.integer(punted),
 					 dontPunt=as.integer(nocode),
-					 seed=as.integer(seed),
+					 atrandom=as.integer(atrandom),
 					 tempname=as.character(tempname),
+					 quiet=as.integer(quiet),
 					 PACKAGE="mfr")
 	 if(retval$reg==0 || retval$pd==0){
 	    graded <- matrix(1,nrow=1,ncol=1)
@@ -68,8 +66,14 @@ mfr1 <- function(g,verbose=TRUE,nocode=FALSE,seed=33632)
 	      punted=retval$punted)
 }
 
-mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126)
+mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126,quiet=FALSE)
 {
+	if(seed>0){
+		set.seed(seed)
+		atrandom=FALSE
+	} else {
+	   atrandom=TRUE
+	}
 	if(nocode==FALSE){
 		if(!has.singular()) {
 			nocode <- TRUE
@@ -77,8 +81,11 @@ mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126)
 		}
 	}
 	punts <- 0
-	if(Size(g)==0) 
-	   return(list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0))
+	if(ecount(g)==0) {
+	   m <- list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0)
+		class(m) <- "mfr"
+	   return(m)
+	}
 	if(nocode){
 	   if(!is.chordal(g)){
 		   cat("The graph is not chordal, and nocode==TRUE\n")
@@ -86,15 +93,16 @@ mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126)
 		}
 	}
 	g <- removeIsolates(g)
-   comps <- components(g)
-	mfrx <- mfr1(subgraph(g,which(comps==1)),verbose=verbose,nocode=nocode,
-	             seed=seed)
+   comps <- clusters(g)
+	mfrx <- mfr1(subgraph(g,which(comps$membership==0)-1),
+	             verbose=verbose,nocode=nocode,atrandom=atrandom,quiet=quiet)
 	punts <- mfrx$punted
 	mfra <- mfrx$graded
-	if(max(comps)>1){
-	   for(i in 2:max(comps)){
-			 mfry <- mfr1(subgraph(g,which(comps==i)),
-							  verbose=verbose,nocode=nocode,seed=seed)
+	if(comps$no>1){
+	   for(i in 1:(comps$no-1)){
+			 mfry <- mfr1(subgraph(g,which(comps$membership==i)-1),
+							  verbose=verbose,nocode=nocode,atrandom=atrandom,
+							  quiet=quiet)
 		    mfra <- combineGraded(mfra,mfry$graded)
 			 punts <- punts + mfry$punted
 		}
@@ -104,7 +112,27 @@ mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126)
 	bettis <- bettis[bettis>0]
 	if(nocode && punts>0)
 		warning("Non-chordal graph without Singular: results are approximate")
-	list(bettis=bettis,graded=graded,reg=nrow(mfra),pd=ncol(mfra)-1,
+	m <- list(bettis=bettis,graded=graded,reg=nrow(mfra),pd=ncol(mfra)-1,
 	     punted=punts)
+   class(m) <- "mfr"
+	m
+}
+
+print.mfr <- function(x,...)
+{
+	cat("Minimal Free Resolution:\n")
+   cat("Total betti numbers:\n")
+	for(i in 1:length(x$bettis)){
+	   cat("\t",x$bettis[i])
+	}
+	cat("\n\nGraded:")
+	for(i in 1:nrow(x$graded)){
+		for(j in 1:ncol(x$graded)){
+		   cat("\t",x$graded[i,j])
+		}
+		cat("\n")
+	}
+	cat("\n")
+	if(x$punted>0) cat("Called Singular",x$punted,"times\n")
 }
 

@@ -20,7 +20,7 @@ MFR *mfrComplete(int n)
    unsigned long **M;
 
 	if(verbose>1){
-	   fprintf(stderr,"Complete graph on %d vertices\n",n);
+	   Rprintf("Complete graph on %d vertices\n",n);
 	}
 	mfr = makeMFR(n-1,2);
 

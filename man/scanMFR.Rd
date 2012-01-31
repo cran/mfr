@@ -9,19 +9,14 @@ Minimal free resolutions of scan regions.
 Computes the MFR of the neighborhood of each vertex.
 }
 \usage{
-scanMFR(g, open = FALSE, ...)
-meanScanMFR(m)
-uniqueScanMFR(m)
+scanMFR(g, method="size",...)
 }
 \arguments{
   \item{g}{
 a graph.
 }
-  \item{m}{
-a list of minimal free resolutions (the output of \code{scanMFR}).
-}
-  \item{open}{
-logical. Is the neighborhood open?
+  \item{method}{
+a character string indicating the method of neighborhood selection.
 }
   \item{\dots}{
 arguments passed to \code{mfr}
@@ -29,32 +24,32 @@ arguments passed to \code{mfr}
 }
 \details{
 Computes the MFR of the scan region (neighborhood) of each vertex.
-\code{meanScanMFR} computes the average of the resolutions. 
-\code{uniqueScanMFR} returns the number of unique MFR's in the list,
-with a count indicating how many times each distinct MFR occurs.
+If \code{method="size"} the number of edges in the neighborhood
+is used to determine the subgraph for which the mfr is computed.
+If \code{method="order"} the largest neighborhood is used. 
+If \code{method="maximum"} or \code{"minimum"}
+then every neighborhood is computed, and the result
+is the maximum/minimum 
+value for each betti number (total or graded) over all the
+regions. In this case, the total betti numbers will NOT be the sum of the
+columns of the graded betti numbers.
 }
 \value{
 \code{scanMFR} returns
-a list of minimal free resolutions for each vertex. 
-\code{meanScanMFR} returns a free resolution.
-\code{uniqueScanMFR}
-returns with entries
-\item{graded}{a list of unique graded resolutions}
-\item{count}{a vector of counts indicating the number of times the resolution
-appears in the list \code{m}}
+the minimal free resolution of the neighborhood determined by
+the locality test according to the values of \code{by.size} and \code{by.order},
+or the maximum bettis over all neighborhoods.
 }
 \references{
 Huy Tai Ha and Adam Van Tuyl, "Splittable ideals and the resolutions of monomial
 ideals", J. Algebra, 309, 405-425, 2007.
 
-Marchette and Johannsen, "Betti numbers of graphs", submitted for publication
-in Statistical Analysis and Data Mining.
+Marchette and Johannsen, "Betti numbers of graphs".
 }
 \author{
-David Marchette, dmarchette@gmail.com
+David Marchette, david.marchette@navy.mil
 }
 \seealso{
-\code{\link{mfr}},
-\code{\link{plotScanMFR}}
+\code{\link{mfr}}
 }
-\keyword{ math }
+\keyword{ graphs }

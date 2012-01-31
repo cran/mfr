@@ -72,7 +72,7 @@ MFR *makeMFR(int pd, int reg)
 	return(mfr);
 }
 
-void fprintfMFR(FILE *fp,MFR *mfr)
+void fprintfMFR(MFR *mfr)
 {
    int i,j;
 	unsigned long *bettis;
@@ -84,20 +84,20 @@ void fprintfMFR(FILE *fp,MFR *mfr)
 			bettis[j] += mfr->graded[i][j];
 		}
 	}
-	fprintf(fp,"Total Bettis:\n");
+	Rprintf("Total Bettis:\n");
 	for(i=1;i<mfr->pd+2;i++){
-	   fprintf(fp,"%ld ",bettis[i]);
+	   Rprintf("%ld ",bettis[i]);
 	}
 	Free(bettis);
-	fprintf(fp,"\nGraded Bettis:\n");
+	Rprintf("\nGraded Bettis:\n");
 	for(i=1;i<mfr->reg+1;i++){
 	   for(j=1;j<mfr->pd+2;j++){
-			fprintf(fp,"%ld ",mfr->graded[i][j]);
+			Rprintf("%ld ",mfr->graded[i][j]);
 		}
-		fprintf(fp,"\n");
+		Rprintf("\n");
 	}
-	fprintf(fp,"\n");
-	fprintf(fp,"pd: %d reg: %d\n",mfr->pd,mfr->reg);
+	Rprintf("\n");
+	Rprintf("pd: %d reg: %d\n",mfr->pd,mfr->reg);
 }
 
 void freeMFR(MFR **Mfr)

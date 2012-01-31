@@ -18,13 +18,13 @@ int isPath(Graph *g)
 MFR *mfrPath(int n)
 {
 	int i,j,d,l;
-	int pd,reg;
+	static int pd,reg;
 	MFR *mfr;
    unsigned long **M;
 
 
 	if(verbose>1){
-	   fprintf(stderr,"Path graph on %d vertices\n",n);
+	   Rprintf("Path graph on %d vertices\n",n);
 	}
 	switch(n % 3){
 	   case 0:

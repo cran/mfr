@@ -30,7 +30,6 @@ void removeIsolates(Graph *g)
 {
    int i,v,n=g->n,s=g->s;
 	int *vertices;
-	Graph *h;
 
 	vertices = Calloc(n,int);
 
@@ -44,7 +43,7 @@ void removeIsolates(Graph *g)
 		}
 	}
 	if(verbose>1){
-	   fprintf(stderr,"Removed %d vertices\n",n-v);
+	   Rprintf("Removed %d vertices\n",n-v);
 	}
 	if(v<n){
 		g->n = v;

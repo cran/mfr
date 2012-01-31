@@ -1,10 +1,9 @@
 \name{is.chordal}
 \alias{peo}
-\alias{simplicial.vertex}
 \alias{is.chordal}
-\alias{is.connected}
 \alias{is.cycle}
 \alias{is.complete}
+\alias{simplicial.vertex}
 \title{
 Tests for certain types of graphs.
 }
@@ -16,7 +15,6 @@ is.chordal(g)
 peo(g)
 simplicial.vertex(g,n)
 is.complete(g)
-is.connected(g)
 is.cycle(g)
 }
 \arguments{
@@ -36,13 +34,13 @@ return a partial list of simplicial vertices.
 }
 \value{
 \code{peo} returns a list of vertices. The others return a logical
-indicating whether the graph is chordal/complete/connected etc.
+indicating whether the graph is chordal/complete etc.
 }
 \references{
 Douglas B. West, Introduction to Graph Theory, Prentice-Hall, 2001.
 }
 \author{
-David Marchette, dmarchette@gmail.com
+David Marchette, david.marchette@navy.mil
 }
 \note{
 If the graph is not chordal, \code{peo} still returns a list of vertices.
@@ -52,4 +50,4 @@ be assumed is that if the graph is not chordal, the list will not have
 length the order of the graph.
 }
 
-\keyword{ math }
+\keyword{ graphs }

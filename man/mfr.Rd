@@ -1,5 +1,6 @@
 \name{mfr}
 \alias{mfr}
+\alias{plot.mfr}
 \title{
 Minimal free resolution.
 }
@@ -7,7 +8,9 @@ Minimal free resolution.
 The minimal free resolution of the edge ideal of a graph.
 }
 \usage{
-mfr(g, verbose = FALSE, nocode = FALSE, seed = 42126)
+mfr(g, verbose = FALSE, nocode = FALSE, seed = 42126, quiet = FALSE)
+\method{plot}{mfr}(x,\dots,icolors=gray((c(255,0:255))/255),
+		  tcolors=2,logMFR=FALSE,zeros=FALSE)
 }
 \arguments{
   \item{g}{
@@ -21,6 +24,22 @@ Do not run Singular.
 }
   \item{seed}{
 seed for the random number generator.
+}
+  \item{quiet}{
+logical. If TRUE no warnings printed when calling Singular for a 
+"large" graph.
+}
+  \item{\dots}{
+arguments passed to plot.
+}
+\item{x}{
+an mfr.
+}
+  \item{icolors,tcolors,zeros,logMFR}{
+colors of the mfr image and text. \code{zeros} is a logical that
+controls whether 0 is plotted. If \code{logMFR} is TRUE, the log
+of the minimal free resolution is plotted in the image instead of the true
+value.
 }
 }
 \details{
@@ -90,7 +109,7 @@ roughly, the larger the expected error.
 
 Note that experiments have shown that the version of Singular 
 that this code was tested on is unable to process
-graphs with more than about 20 vertices, so a warning is printed to
+graphs with more than about 30 vertices, so a warning is printed to
 the screen if Singular is called with a large enough graph. This warning
 gives a wildly innaccurate estimate of how long the process is expected
 to take, but if the number is in the thousands of minutes or more, it is
@@ -122,9 +141,19 @@ ideals", J. Algebra, 309, 405-425, 2007.
 
 Marchette and Johannsen, "Betti numbers of graphs", submitted for publication
 in Statistical Analysis and Data Mining.
+
+Decker, W.; Greuel, G.-M.; Pfister, G.; Schonemann, H.: 
+"Singular {3-1-3} --- A computer algebra system for polynomial computations."
+http://www.singular.uni-kl.de, 2011.
 }
 \author{
-David Marchette, dmarchette@gmail.com
+David Marchette, david.marchette@navy.mil
+}
+\note{
+I have not tested this on a Windows platform. I believe that you must
+change the working directory to C:/cygwin/bin before any call to Singular.
+If you figure out a way to get this to work without doing this, drop
+me a line so I can fix the code.
 }
 \seealso{
 \code{\link{scanMFR}}, and \code{\link{MFRbwg}}, 
@@ -134,10 +163,22 @@ David Marchette, dmarchette@gmail.com
 \code{\link{MFRStar}},
 \code{\link{MFRPath}},
 \code{\link{MFRWheel}} for special cases.
+See \code{\link{singular}} and \code{\link{graph2EdgeIdeal}} for calling
+Singular directly, and for constructing the Singular code to analyze
+the edge ideal.
 }
 
 \examples{
-g <- rg(10)
+g <- rchordal(n=10,15)
 mfr(g)
+\dontrun{
+g <- rchordal(10,20)
+mfr(g)
+singular(g)
+singular(command=graph2EdgeIdeal(g))
+# These should all have the same results, although the third result
+# will be contained in strings as output by Singular. 
+# The latter two will only work if Singular is installed.
 }
-\keyword{ math }
+}
+\keyword{ graphs }
