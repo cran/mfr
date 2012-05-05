@@ -7,7 +7,7 @@ int components(Graph *g,int *comp)
    int i,j;
 	int n=g->n,s=g->s;
 	int **edges=g->edges;
-	int curcomp,v,changed,zeros;
+	int curcomp,changed,zeros;
 
 	memset(comp,0,sizeof(int));
 
@@ -41,7 +41,6 @@ int components(Graph *g,int *comp)
 		for(i=0;i<n;i++){
 		   if(comp[i]==0){
 			   zeros=1;
-				v=i;
 				comp[i]=curcomp;
 				break;
 			}

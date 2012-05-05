@@ -25,7 +25,7 @@ not retained.
 a graph or a vector of vertices.
 }
 \author{
-David J. Marchette, dmarchette@gmail.com
+David J. Marchette, \email{dmarchette@gmail.com}
 }
 
 \keyword{ graphs }

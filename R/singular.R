@@ -1,7 +1,18 @@
 
+#has.singular <- function(){
+#	if(Sys.info()[['sysname']]=="Windows"){
+#		a <- system("bash.exe Singular -c 'quit;' -q -t --no-out --no-warn",
+#		       show.output.on.console=FALSE,minimized=TRUE,invisible=TRUE)
+#	} else {
+#		a <- system("Singular -c 'quit;' -q -t --no-out --no-warn",
+#		            ignore.stdout=TRUE,ignore.stderr=TRUE)
+#	}
+#	a==0
+#}
 has.singular <- function(){
 	if(Sys.info()[['sysname']]=="Windows"){
-		a <- system("bash.exe Singular -c 'quit;' -q -t --no-out --no-warn",
+		# this is never going to work on a windows box
+		a <- system("Singular -c 'quit;' -q -t --no-out --no-warn",
 		       show.output.on.console=FALSE,minimized=TRUE,invisible=TRUE)
 	} else {
 		a <- system("Singular -c 'quit;' -q -t --no-out --no-warn",
@@ -102,7 +113,7 @@ singular <- function(g,verbose=FALSE,command,quiet=FALSE)
 	 bettis <- apply(graded,2,sum)
 	 a <- list(bettis=bettis,graded=graded,reg=retval$reg,pd=retval$pd,
 	      punted=retval$punted)
-    class(a) <- "mfr"
+    class(a) <- c("mfr","exact")
 	 a
 }
 

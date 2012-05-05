@@ -19,20 +19,24 @@ MFRComplete(n)
 MFRCompleteBipartite(n,m)
 MFRCycle(n)
 MFRbwg(spokes)
-MFRStar(n)
+MFRStar(n,...)
 MFRWheel(n)
 }
 \arguments{
   \item{n}{
 order of the graph. In the case of a wheel graph, n must be odd.
 In the case of a complete bipartite graph, this is the number of vertices
-in the first group.
+in the first group. In the case of \code{MFRStar}, this can be a graph,
+in which case the code computes the MFR of the star of the graph.
 }
   \item{m}{
 number of vertices in the second group of the complete bipartite graph.
 }
   \item{spokes}{
 number of spokes in the broken wheel graph.
+}
+  \item{\dots}{
+arguments passed to \code{mfr} if \code{n} is a graph.
 }
 }
 \details{
@@ -65,7 +69,7 @@ Marchette and Johannsen, "Betti numbers of graphs", submitted for publication
 in Statistical Analysis and Data Mining.
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
 }
 
 \seealso{

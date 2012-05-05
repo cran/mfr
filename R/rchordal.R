@@ -2,6 +2,9 @@
 rchordal <- function(n,size=n-1,g,from.tree=TRUE,from.ring=FALSE,add=TRUE,
                      random.size=FALSE)
 {
+	if(!missing(g)) {
+		n <- vcount(g)
+	}
 	if(missing(n)){
 		stop("must provide n")
 	}

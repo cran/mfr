@@ -100,7 +100,7 @@ Rukhin and Priebe, "A comparative power analysis of the maximum degree
 and size invariants for random graph inference", to appear JSPI, 2010.
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
 }
 \seealso{
    \code{\link{erdos.renyi.game}}, \code{\link{graph.full.bipartite}}.

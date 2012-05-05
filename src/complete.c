@@ -19,7 +19,7 @@ MFR *mfrComplete(int n)
 	MFR *mfr;
    unsigned long **M;
 
-	if(verbose>1){
+	if(verbose>0){
 	   Rprintf("Complete graph on %d vertices\n",n);
 	}
 	mfr = makeMFR(n-1,2);

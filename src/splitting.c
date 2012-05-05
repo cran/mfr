@@ -1,6 +1,7 @@
 #include "splitting.h"
 
 extern int verbose;
+extern int CHECKDATABASE;
 
 extern int APPROXBETTIS;
 
@@ -325,7 +326,7 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 	if(nocode==0) NOCODEAPPROX=0;
 	else NOCODEAPPROX=1;
 
-	if(verbose){
+	if(verbose>1){
 	   Rprintf("MFR: Depth = %d\n",depth);
 		Rprintf("\tn = %d, s = %d\n",numberVerticesActive(g),g->s);
 	}
@@ -336,6 +337,7 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 	removeIsolates(g);
 	comps = Calloc(g->n,int);
 	m = components(g,comps);
+	void R_CheckUserInterrupt(void);
 	if(m>1){
 	   N = Calloc(g->n,int);
 		for(i=0;i<g->n;i++){
@@ -490,6 +492,27 @@ MFR *mfrSplitting(Graph *g, int depth, int *numCombs,int *punted, int nocode,
 			if(verbose>0){
 				Rprintf("No simplicial vertices (or splitting edges)\n");
 			}
+			if(CHECKDATABASE){
+				if(verbose>0) {
+				   Rprintf("Checking database\n");
+				}
+				mfr = checkDataBase(g);
+				if(mfr->notfound==0) {
+					if(verbose>0) {
+						Rprintf("Graph in database\n");
+					}
+					return(mfr);
+				}
+				freeMFR(&mfr);
+			}
+			mfr = chordalComp(g);
+			if(mfr->notfound==0) {
+				if(verbose>0) {
+					Rprintf("Graph is the complement of a chordal graph\n");
+				}
+				return(mfr);
+			}
+			freeMFR(&mfr);
 			if(nocode){
 				return(mfrSplitting(g, depth, numCombs,punted, nocode,tempname,
 				                    quiet));

@@ -8,14 +8,9 @@ kidney.egg.game <- function(n=100,p=.1,m=10,q=.4,r=p,g,h,
 	}
 	if(!missing(h)) {
 		m <- vcount(h)
-		if(m>n){
-			stop("m must be less than or equal to n")
-		}
 	}
-	if(m>=n){
-		if(missing(h)){
-			stop("m must be less than n")
-		}
+	if(m>(n/2)){
+		stop("m must be less than or equal to n/2")
 	} else if(m<1){
 	   stop("m must be positive")
 	}
@@ -39,42 +34,27 @@ kidney.egg.game <- function(n=100,p=.1,m=10,q=.4,r=p,g,h,
 		}
 	} 
 	if(nog){
-		if(add.to){
-			g <- erdos.renyi.game(n,p.or.m=p,directed=directed,type=ktype,
+        if (add.to) {
+            g <- erdos.renyi.game(n, p.or.m = p, directed = directed, 
+                type = ktype, loops = loops)
+        }
+        else {
+				g <- erdos.renyi.game(n-m,p.or.m=p,directed=directed,type=ktype,
 										 loops=loops)
-		} else {
-			g <- erdos.renyi.game(n-m,p.or.m=p,directed=directed,type=ktype,
-										 loops=loops)
-		}
-	} else {
-		if(!add.to){
-			g <- delete.vertices(g,0:(m-1))
 		} 
+	} else {
+        if (!add.to) {
+            g <- delete.vertices(g, 0:(m - 1))
+        }
 	}
+
 	n <- vcount(g)
 	m <- vcount(h)
-	g <- graph.disjoint.union(h,g)
-	k <- graph.full.bipartite(m,n,directed=directed,mode=mode)
-	kedges <- get.edgelist(k)
 	if(ektype=="gnm") {
-		if(r==0){
-		   kedges <- NULL
-		} else{
-			z <- sample(nrow(kedges),r,replace=FALSE)
-			kedges <- kedges[z,]
-		}
+	   g <- product.game(h,g,n=p)
 	} else {
-		a <- rbinom(1,nrow(kedges),r)
-		if(a==0) {
-			kedges <- NULL
-		}
-		else {
-			z <- sample(nrow(kedges),a)
-			kedges <- kedges[z,]
-		}
+	   g <- product.game(h,g,p=p)
 	}
-	edges  <- rbind(get.edgelist(g),kedges)
-	g <- graph(t(edges),directed=directed)
 
 	n <- vcount(g)
 	x <- matrix(0,nrow=n,ncol=2)

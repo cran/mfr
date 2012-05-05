@@ -12,7 +12,7 @@ MFR *mfrEmpty(void)
 {
 	MFR *mfr;
 
-	if(verbose>1){
+	if(verbose>0){
 	   Rprintf("Empty graph\n");
 	}
 	mfr=makeMFR(1,1);

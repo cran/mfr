@@ -47,10 +47,11 @@ code to compute the mimimal free resolution of the edge ideal of \code{g}.
 \code{resString} must be one of "res","lres","mres","sres","nres", or
 "minres".
 
-I have not tested this on a Windows platform. I believe that you must
-change the working directory to C:/cygwin/bin before any call to Singular.
+I have not tested this on a Windows platform. Calling Singular
+on a Windows box is quite different than Unix. At the very least,
+the macro SINGULAR in singular.c probably needs to be changed.
 If you figure out a way to get this to work without doing this, drop
-me a line so I can fix the code.
+me a line so I can fix the code. 
 }
 \value{
 \code{singular} returns
@@ -68,7 +69,29 @@ Decker, W.; Greuel, G.-M.; Pfister, G.; Schonemann, H.:
 http://www.singular.uni-kl.de, 2011.
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
+}
+\note{
+  It is hoped that in a future release I will have C code to directly compute
+  the MFR in the event that Singular is unavailable. Instead, if Singular
+  is unavailable (and currently this is always the case on Windows, at least,
+  even if Singular is installed, due to the vagueries of Windows) the results
+  from the code are not correct, and one shouldn't rely on them (although they
+  may be in the ballpark, if you are lucky). If the graph is chordal, this is
+  never a problem, and even if it isn't there will be cases where the code
+  can figure out the MFR without resorting to Singular. Bottom line: if you
+  don't have Singular working with this code you should probably restrict
+  to chordal graphs.
+
+	The way the code works now, 
+	\code{has.singular}
+	will basically return FALSE on a Windows platform. Singular uses cygwin,
+	and as near as I can figure, you need to be in the cygwin/bin directory
+	and call "bash.exe Singular" in order to execute Singular. This still
+	has some problems that I was unable to address, and so for now Singular
+	is not callable on a Windows platform.
+
+	On a Unix platform, as long as Singular is in your path, this should work.
 }
 
 \seealso{

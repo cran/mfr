@@ -34,13 +34,13 @@ int isCycle(Graph *g)
 
 MFR *mfrCycle(int n)
 {
-	int i,j,d,l,k;
+	int i,j,d,l;
 	static int pd,reg;
 	MFR *mfr;
    unsigned long **M;
 
 
-	if(verbose>1){
+	if(verbose>0){
 	   Rprintf("Cycle on %d vertices\n",n);
 	}
 	switch(n % 3){
@@ -64,7 +64,6 @@ MFR *mfrCycle(int n)
 			j = d-l+1;
 			i = j-2;
 			if(j>=2 && j<=reg){
-				k=d-l;
 				M[j][d-i] = (n*mychoose(d-l,2*l-d)*
 				             mychoose(n-2*(d-l),d-l))/(n-2*(d-l));
 			}

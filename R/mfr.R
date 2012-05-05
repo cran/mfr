@@ -15,13 +15,22 @@ combineGraded <- function(gra,grb)
 	G[2:N,2:M]
 }
 
-mfr1 <- function(g,verbose=TRUE,nocode=FALSE,atrandom=FALSE,quiet=FALSE)
+mfr1 <- function(g,verbose=TRUE,nocode=FALSE,atrandom=FALSE,quiet=FALSE,
+                 check.database=TRUE)
 {
+	if(check.database){
+	   a <- checkDB(g)
+		if(!is.null(a)) return(a)
+	}
+
    n <- vcount(g)
 	s <- ecount(g)
 
-	if(s==0) 
+	if(s==0) {
 	   return(list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0))
+	} else if((vcount(g)>4) && is.chordal.comp(g)){
+	   return(chordal.comp.mfr(g))
+	}
 
 	graded <- rep(0,n*n)
 
@@ -30,7 +39,7 @@ mfr1 <- function(g,verbose=TRUE,nocode=FALSE,atrandom=FALSE,quiet=FALSE)
 	   cat("Graph = (",n,",",s,")\n",sep="")
 		cat("tempname =",tempname,"\n")
 	}
-	edges <- get.edgelist(g)+1
+	edges <- get.edgelist(g)
 	punted <- 0
 	retval <- .C("mfr",
 					 edges1 = as.integer(edges[,1]),
@@ -47,6 +56,7 @@ mfr1 <- function(g,verbose=TRUE,nocode=FALSE,atrandom=FALSE,quiet=FALSE)
 					 atrandom=as.integer(atrandom),
 					 tempname=as.character(tempname),
 					 quiet=as.integer(quiet),
+					 checkdb=as.integer(check.database),
 					 PACKAGE="mfr")
 	 if(retval$reg==0 || retval$pd==0){
 	    graded <- matrix(1,nrow=1,ncol=1)
@@ -66,8 +76,21 @@ mfr1 <- function(g,verbose=TRUE,nocode=FALSE,atrandom=FALSE,quiet=FALSE)
 	      punted=retval$punted)
 }
 
-mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126,quiet=FALSE)
+mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126,quiet=FALSE,
+					 check.database=TRUE,
+                suppress.warning=FALSE,add.internal=TRUE,remove.isolates=TRUE)
 {
+	if(!is.simple(g)) g <- simplify(g)
+	if(is.directed(g)) g <- directed2bipartite(g,add.internal=add.internal,remove.isolates=remove.isolates)
+	if(ecount(g)==0) {
+	   m <- list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0)
+		class(m) <- c("mfr","exact")
+	   return(m)
+	}
+	if(check.database){
+	   a <- checkDB(g)
+		if(!is.null(a)) return(a)
+	}
 	if(seed>0){
 		set.seed(seed)
 		atrandom=FALSE
@@ -77,15 +100,12 @@ mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126,quiet=FALSE)
 	if(nocode==FALSE){
 		if(!has.singular()) {
 			nocode <- TRUE
-			warning("Singular not found: setting nocode==TRUE")
+			if(!suppress.warning){
+				warning("Singular not found: setting nocode==TRUE")
+			}
 		}
 	}
 	punts <- 0
-	if(ecount(g)==0) {
-	   m <- list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0)
-		class(m) <- "mfr"
-	   return(m)
-	}
 	if(nocode){
 	   if(!is.chordal(g)){
 		   cat("The graph is not chordal, and nocode==TRUE\n")
@@ -95,12 +115,14 @@ mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126,quiet=FALSE)
 	g <- removeIsolates(g)
    comps <- clusters(g)
 	mfrx <- mfr1(subgraph(g,which(comps$membership==0)-1),
+					 check.database=check.database,
 	             verbose=verbose,nocode=nocode,atrandom=atrandom,quiet=quiet)
 	punts <- mfrx$punted
 	mfra <- mfrx$graded
 	if(comps$no>1){
 	   for(i in 1:(comps$no-1)){
 			 mfry <- mfr1(subgraph(g,which(comps$membership==i)-1),
+							  check.database=check.database,
 							  verbose=verbose,nocode=nocode,atrandom=atrandom,
 							  quiet=quiet)
 		    mfra <- combineGraded(mfra,mfry$graded)
@@ -110,11 +132,14 @@ mfr <- function(g,verbose=FALSE,nocode=FALSE,seed=42126,quiet=FALSE)
 	bettis <- apply(mfra,2,sum)
 	graded <- mfra[,bettis>0]
 	bettis <- bettis[bettis>0]
-	if(nocode && punts>0)
-		warning("Non-chordal graph without Singular: results are approximate")
+	if(nocode && punts>0){
+		if(!suppress.warning){
+			warning("Non-chordal graph without Singular: results are approximate")
+		}
+	}
 	m <- list(bettis=bettis,graded=graded,reg=nrow(mfra),pd=ncol(mfra)-1,
 	     punted=punts)
-   class(m) <- "mfr"
+   class(m) <- c("mfr",ifelse((punts>0) && nocode,"approximate","exact"))
 	m
 }
 
@@ -134,5 +159,7 @@ print.mfr <- function(x,...)
 	}
 	cat("\n")
 	if(x$punted>0) cat("Called Singular",x$punted,"times\n")
+	if(inherits(x,"exact")) cat("MFR is exact\n")
+	if(inherits(x,"approximate")) cat("MFR is approximate\n")
 }
 

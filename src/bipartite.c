@@ -54,7 +54,7 @@ MFR *mfrCompleteBipartite(int n,int m)
 	MFR *mfr;
    unsigned long **M;
 
-	if(verbose>1){
+	if(verbose>0){
 	   Rprintf("Complete bipartite graph on %d+%d vertices\n",n,m);
 	}
 	mfr = makeMFR(m+n-1,2);

@@ -16,6 +16,7 @@ Graph *makeGraph(int **edges,int s,int n)
 	g->n = n;
 	g->s = s;
 
+
 	if(s>0){
 		g->edges = edges;
 
@@ -35,11 +36,10 @@ Graph *makeGraph(int **edges,int s,int n)
 void freeGraph(Graph **G)
 {
 	Graph *g;
-   int i,n,s;
+   int i,s;
 
 	g = *G;
 
-   n=g->n;
 	s=g->s;
 
 
@@ -59,6 +59,7 @@ MFR *makeMFR(int pd, int reg)
    MFR *mfr;
    
 	mfr = Calloc(1,MFR);
+	mfr->notfound = 0;
 	mfr->nrow = max(reg+1,3);
 	mfr->ncol = max(pd+2,3);
 	mfr->graded = Calloc(mfr->nrow,unsigned long *);

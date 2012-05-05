@@ -1,0 +1,512 @@
+% \VignetteIndexEntry{Minimal Free Resolutions Package}
+% \VignetteDepends{mfr}
+% \VignetteKeyword{graphs}
+
+\documentclass{article}
+
+
+\usepackage{amssymb,amsmath,amsthm}
+\usepackage{url}
+\usepackage[mathscr]{eucal}
+
+\begin{document}
+
+<<echo=false,results=hide>>=
+require(mfr)
+print.mfr <- function(x,...) print.default(x)
+@
+
+\title{Minimal Free Resolutions Package}
+
+\author{
+David J. Marchette
+}
+\date{}
+
+\maketitle
+
+\section{Introduction}
+A graph is a set of vertices and a set of edges, $G=(V,E)$. In the
+\texttt{mfr} package all graphs are assumed undirected and simple:
+there are no self-loops (edges from a vertex $v$ to itself) and no
+multiple edges.
+
+The neighborhood of a vertex $v$ is the set of vertices connected to 
+$v$ by an edge, union the vertex $v$. We write this as $N[v]$.
+A splitting edge is an edge between vertices
+$u$ and $v$, such that $N[u]\subset N[v]$.
+
+A graph is chordal if every induced cycle has a chord (an edge between
+two vertices that are not adjacent in the cycle). The complement of
+a graph is a graph on the same vertices with an edge in the new graph
+between vertices $u$ and $v$ if and only if there is no such edge in
+the original graph. 
+
+A graph invariant is a function that is constant on isomorphism classes.
+The Betti numbers of a graph correspond to a matrix-valued graph invariant.
+The details of what these are and some information about how they can
+be computed is in the vignette \texttt{edgeideals} and the references
+therein. For now, we will simply treat these as a ``black box'' of 
+graph invariants, and look at the various functions available in the
+\texttt{mfr} package that allows us to compute them (at least for small
+graphs).
+
+The \texttt{mfr} package extends the \texttt{igraph} package and
+makes use of the functionality inherent in it. There are a number of
+fundamental limitations that are the result of the computational complexity
+of the minimal free resolution (MFR).
+
+\begin{enumerate}
+\item The algorithms work primarily on chordal graphs.
+The algorithm is recursive, so the size of the graph for which the
+MFR can be calculated depends on the size of the recursion stack, and
+on the size of memory.
+\item The recursive algorithm can be applied to non-chordal graphs, 
+so long as there exist splitting edges in the graph.
+If the graph is not chordal, at some point in the recursion a graph
+will occur which has no splitting edges. At this point, either one
+of the special cases will be used, the Singular algebraic geometry
+package will be called if available, or an approximation to the MFR
+will be returned.
+\item It is unlikely that the MFR for
+a graph with more than a couple dozen
+vertices can be computed on a reasonable computer in a reasonable amount
+of time if the graph contains no splitting edges and is not one of the
+special cases.
+\end{enumerate}
+
+The following sections detail the main functionality of the package.
+Section \ref{sect:random} describes some new random graphs, 
+and Section \ref{sect:graphs} describe some new graphs added to the
+ones available in the \texttt{igraph} package,
+while the
+later sections cover the minimal free resolutions themselves.
+
+\section{Some Random Graphs}\label{sect:random}
+
+The \texttt{mfr} package has several functions for creating random graphs.
+Because of the recursive algorithm for chordal graphs (see the vignette
+\texttt{edgeideals}) there is code to generate trees and chordal graphs.
+\begin{figure}
+\centering
+<<fig=true,width=6,height=6>>=
+set.seed(1234)
+g <- rtree(20)
+plot(g,layout=layout.fruchterman.reingold,vertex.label="",vertex.size=1)
+@
+\caption{\label{fig:rtree}
+A random tree.
+}
+\end{figure}
+
+\begin{figure}
+<<fig=true,width=6,height=6>>=
+set.seed(2322)
+h <- rchordal(10,20)
+plot(h,layout=layout.fruchterman.reingold,vertex.label="",vertex.size=1)
+@
+\caption{\label{fig:rchordal}
+A random chordal graph.
+}
+\end{figure}
+
+By default, \texttt{rchordal} starts with a random tree and adds edges 
+(keeping the graph chordal) until the desired number of edges is 
+obtained.
+
+There is also a slight generalization of the \texttt{erdos.renyi.game}
+random graph, a block model with two blocks called the 
+\texttt{kidney.egg.game}. The basic idea is that there is a large
+subset of vertices (the ``kidney'') and a small set (the ``egg'') with
+a higher edge probability in the egg.
+
+\begin{figure}
+\centering
+<<fig=true,width=6,height=6>>=
+set.seed(2452)
+g <- kidney.egg.game(n=30,p=.1,m=10,q=.6)
+plot(g,vertex.label="",vertex.size=2)
+@
+\caption{\label{fig:ke}
+A kidney-egg graph.
+}
+\end{figure}
+
+Note that kidney-egg graphs have their own plot function, putting
+the egg on the right. Kidney-egg graphs are a special case of
+\texttt{product.game} graphs. This function takes two graphs and
+creates a new graph with these two as subgraphs, randomly connected
+by edges between the subgraphs. The use provides either a probability
+$p$ or a number $n$, and either $n$ edges are randomly selected between
+the subgraphs, or each possible edge is chosen with probability $p$.
+The argument $p$ takes precedent, so if it is given $n$ is ignored.
+
+Another class of random graphs are the random dot product graphs (RDPG).
+A random dot product graph is a random graph in which each vertex $v$
+has associated with it a vector $x_v$, and the probability of an
+edge between two vertices $u$ and $v$ is the dot product of their vectors,
+$P[uv]=x_u^tx_v$. Conditional on the $x$ vectors, the edges are independent,
+just as is the case with \texttt{erdos.renyi.game}.
+The function \texttt{rdpg.game} will generate an RDPG. If
+it is called with the argument $x$, it uses the matrix $x$ to generate
+the graph, with one vertex for each row of $x$. If $x$ is not given,
+it is generated uniformly inside the simplex.
+
+Given an RDPG graph $g$, we may estimate the $x$ vectors using 
+\texttt{rdpg.estimate}. For this one mush posit the dimension of the vectors.
+One RDPG graph, with the estimated $x$ points, is shown in 
+Figure \ref{fig:rdpg}.
+
+\begin{figure}
+\centering
+<<fig=true,width=6,height=6>>=
+set.seed(2452)
+g <- rdpg.game(n=30,d=2)
+est <- rdpg.estimate(g,d=2)
+X <- procrustes(est$x,g$x)$X.new
+plot(g,layout=g$x,vertex.label="",vertex.size=2,rescale=FALSE,
+     xlim=c(min(X[,1],0),max(X[,1],1)),
+     ylim=c(min(X[,2],0),max(X[,2],1)))
+points(X,pch=20,col=2)
+segments(X[,1],X[,2],g$x[,1],g$x[,2])
+@
+\caption{\label{fig:rdpg}
+A random dot product graph, with the estimated points shown in red.
+The black segments link the estimated point to the vertex.
+}
+\end{figure}
+
+<<results=hide,echo=FALSE>>=
+D <- g$x %*% t(g$x)
+diag(D) <- 0
+DE <- X %*% t(X)
+diag(DE) <- 0
+set.seed(563)
+g <- rdpg.game(n=1000,d=2)
+X <- rdpg.estimate(g,d=2)$x
+D2 <- g$x %*% t(g$x)
+diag(D2) <- 0
+DE2 <- X %*% t(X)
+diag(DE2) <- 0
+@
+
+The picture in Figure \ref{fig:rdpg} does not seem to be very impressive. 
+The estimate is not terribly good. The estimates will improve as $n$ increases.
+The average Frobenious error between the true probability matrix and
+the estimated one, in this case, is 
+\Sexpr{round(mean(c(abs(D-DE))),3)}. Increasing $n$ to $1000$, a similar
+experiment results in the average Frobenious error of 
+\Sexpr{round(mean(c(abs(D2-DE2))),3)}.
+
+The estimates are not guaranteed to have valid dot products (values
+in [0,1]) or to be in the first quadrant. They are only unique up to
+rotations and flips.
+
+\section{Some New Graph Types}\label{sect:graphs}
+We have added some new graph types to the 
+package to supplement those in \texttt{igraph}.
+
+We implement a version of barbell graphs in \texttt{graph.barbell}.
+The graph consists of two ``bells'' -- either two complete graphs or
+two cycles -- connected by a path. See 
+the top two graphs in Figure \ref{fig:graphs}.
+
+Two other graphs that have a particular coloring property (the vertices
+and edges can be colored so that every neighborhood has exactly the
+same number of each color) are depicted in the
+bottom two graphs of Figure \ref{fig:graphs}. 
+
+\begin{figure}
+\centering
+<<fig=true,width=6,height=6>>=
+par(mfrow=c(2,2))
+g <- graph.barbell(7,5,2)
+x <- layout.circle(graph.full(7))
+y <- scale(layout.circle(graph.full(5)),center=c(-5,0),scale=FALSE)
+z <- rbind(c(2,0),c(3,0))
+plot(g,layout=rbind(x,y,z),vertex.label="")
+g <- graph.barbell(7,5,2,full=FALSE)
+x <- layout.circle(graph.full(7))
+y <- scale(layout.circle(graph.full(5)),center=c(-5,0),scale=FALSE)
+z <- rbind(c(2,0),c(3,0))
+plot(g,layout=rbind(x,y,z),vertex.label="")
+g <- graph.truncated.tetrahedron()
+plot(g,vertex.label="")
+g <- graph.martini.glasses()
+plot(g,vertex.label="")
+par(mfrow=c(1,1))
+@
+\caption{\label{fig:graphs}
+Two barbell graphs (top), a truncated tetrahedron (bottom left)
+and a ``martinis glasses'' graph (bottom right).
+}
+\end{figure}
+
+One interesting way of creating new graphs from old is via clique expansion.
+Given a d-regular graph, we can replace very vertex with a d-clique. This
+can be done with the function \texttt{clique.expand}.
+
+<<>>
+g <- graph.full(4)
+h <- clique.expand(g)
+k <- graph.truncated.tetrahedron()
+graph.isomorphic(h,k)
+@
+
+\section{Minimal Free Resolutions}\label{sect:mfr}
+See the vignette \texttt{edgeideals}, and the 
+references therein, for information about minimal
+free resolutions. For now we will simply consider 
+an MFR to be a matrix of graph invariants.
+
+The code uses the following logic:
+
+\begin{enumerate}
+\item Check to see if the graph is of a particular form that allows
+fast calculation. See Section \ref{sect:special}
+\item Check to see if the graph is in the pre-computed database. See
+Section \ref{sect:mfrdb}
+\item Determine if there is a splitting edge (an edge that allows
+the recursive algorithm to progress). If so, recurse.
+\item If no splitting edges exist:
+\begin{enumerate}
+\item If Singular is available, call it to compute the MFR.
+\item Else ``fake it''.
+\end{enumerate}
+\end{enumerate}
+The last case, ``fake it'' means to try to approximate the MFR (see
+the \texttt{edgeideals} vignette). 
+
+Let's consider a typical result of calling \texttt{mfr}:
+
+<<>>=
+g <- graph.famous("petersen")
+mfr(g)
+@
+\begin{figure}
+\centering
+<<fig=true,width=6,height=6>>=
+x <- layout.concentric.circles(g,list(nodes=5:9))
+plot(g,vertex.label="",vertex.size=2,layout=x)
+@
+\caption{\label{fig:petersen}
+The Petersen graph.
+}
+\end{figure}
+The attribute \texttt{graded} is the graded Betti number matrix.
+\texttt{bettis} are the total Betti numbers, corresponding to the
+column sum of \texttt{graded}. The value \texttt{pd} is the 
+projective dimension of the edge ideal, which is one less than
+the number of columns (it is the length of the non-trivial part
+of the resolution), and \texttt{reg} is the regularity 
+(Mumford-Castelnuovo regularity)
+of the ideal,
+the number of rows of the graded resolution,
+and corresponds to a measure of how ``complicated'' the graph is.
+Finally, the attribute \texttt{punted} indicates whether the code
+had to call Singular, or, if Singular is unavailable, whether the
+code had to use an approximation (and in this case if it is non-zero
+the resolution is not guaranteed to be exact).
+Note that for the Petersen graph above (see Figure \ref{fig:petersen})
+we would have to call Singular to compute the resolution if it wasn't
+one of the graphs in the database for which the MFR is pre-computed.
+See Section \ref{sect:mfrdb}.
+
+The MFR can be computed separately on the connected components of
+a graph, and then the overall resolution can be computed from these.
+For example, for two components with resolutions $\beta^1$ and
+$\beta^2$ we have:
+$$
+\beta_{i,j} = \sum\limits_{p+q=i,r+s=j} \beta^1_{p,r}*\beta^2_{q,s}.
+$$
+
+<<>>=
+g <- graph.famous("petersen")
+g1 <- graph(c(0,1),directed=FALSE)
+g2 <- graph.disjoint.union(g1,g1)
+g3 <- graph.disjoint.union(g,g1)
+mfr(g1)
+mfr(g2)
+mfr(g3)
+@
+
+It is a fact that $\beta_{2,2}$ is always the size of the graph 
+(the number of edges) and that the other Betti numbers compute 
+the number of certain types of induced subgraphs, but it is not
+trivial to figure out which subgraphs are counted for each Betti
+number.
+
+Define an angle to be a graph on three vertices with two edges,
+and a triangle is $K_3$, the graph on three vertices with three edges.
+Finally, define a \emph{bars} graph to be a graph isomorphic to \texttt{g2}
+above: a two component graph on $4$ vertices in which each component
+is a two vertex graph with one edge. Write $\#\rangle$ for the number of
+induced angles in a graph, $\#\Delta$ for the number of induced triangles,
+and $\#||$ for the number of induced bars. 
+It turns out that:
+$\beta_{2,3}=\#\rangle+2\#\Delta$ and $\beta{3,3}=\#||$.
+
+<<>>=
+g <- graph.famous("petersen")
+g1 <- graph(c(0,1),directed=FALSE)
+h <- graph.disjoint.union(g,g1)
+mfr(g)
+mfr(h)
+@
+Note that we have doubled the number of bars without effecting the
+number of angles or triangles in going from the Petersen graph to
+\texttt{h}. It is clear that we have also added quite a bit of structure
+to the rest of the matrix, indicating that the other Betti numbers 
+are counting complicated combinations of induced subgraphs some of
+which are not connected (like ``bars'').
+
+\subsection{The Database \texttt{mfrDB}}\label{sect:mfrdb}
+The package comes with a database with a number of MFRs precomputed.
+This makes it easier to calculate the MFR of small graphs. It is 
+also useful for larger graphs: when the recursive algorithm reaches
+a graph with no splitting edges, it first checks the database to see
+if the graph has already been pre-computed, allowing it to avoid a
+call to Singular (or a ``punt'' to an approximation).
+
+The database contains (mostly) graphs which require Singular
+for the computation of the minimal free resolution.
+There are \Sexpr{mfrDB$n} graphs in the database, of which 
+\Sexpr{sum(unlist(lapply(mfrDB$mfrs,function(x)x$punted>0)))}
+required Singular (the rest are just there for convenience).
+See \texttt{create.mfr.database} for more detail.
+
+For graphs in the database, the attribute \texttt{punted} is set to $0$,
+even if Singular had to be called in order to compute the MFR for the
+graph originally. As we saw above, the Petersen graph is in the database
+and the MFR indicates that Singular was not called. However, we can
+check the database directly and see that Singular had to be called
+in order to compute the MFR:
+<<>>=
+g <- graph.famous("petersen")
+mfrDB$mfrs[which.DB(g)]
+@
+Thus, Singular was called once on the graph in order to compute the MFR.
+It is easy to see that the Petersen graph contains no splitting edges,
+and is not one of the special cases (see Section \ref{sect:special}),
+which is why it immediately fails all the tests and must resort to a call
+to Singular.
+
+\subsection{Special Cases}\label{sect:special}
+There are a number of special cases that can be computed quickly.
+Most of these take the parameter(s) that defines the graph and
+return the MFR for that graph.
+
+\begin{itemize}
+\item Complete graphs.
+<<>>=
+MFRComplete(11)
+@
+\item Complete bipartite graphs.
+<<>>=
+MFRCompleteBipartite(6,5)
+@
+\item Cycles.
+<<>>=
+MFRCycle(11)
+@
+\item Paths.
+<<>>=
+MFRPath(11)
+@
+\item Stars.
+<<>>=
+MFRStar(11)
+@
+\item Wheels with an odd number of vertices.
+<<>>=
+MFRWheel(11)
+@
+\item Graphs whose complement is chordal. Note that complete graphs
+are a special case of these.
+<<>>=
+set.seed(5234)
+g <- rchordal(7,12)
+h <- graph.complementer(g)
+mfr(h)
+@
+It is important to note that \texttt{chordal.comp.mfr} 
+\emph{does not check that the complement of the graph is chordal}! It
+assumes that you have done this check prior to calling the function.
+Thus it is best to let \texttt{mfr} take care of things rather than
+calling \texttt{chordal.comp.mfr} yourself.
+<<>>=
+mfr(g,check.database=FALSE)
+chordal.comp.mfr(g) 
+@
+This last is \emph{wrong}. You must always check, using
+\texttt{is.chordal.comp(g)} or 
+equivalently \texttt{is.chordal(graph.complementer(g))},
+to ensure that \texttt{chordal.comp.mfr} is appropriate. The \texttt{mfr}
+code does this for you.
+\end{itemize}
+
+\section{Partial Results}
+There is a small amount of code for producing partial Betti number results.
+In particular, the functions \texttt{betti2}, \texttt{betti3} and 
+\texttt{linearStrand}. \texttt{betti2} just the size of the graph
+($\beta_{2,2}$), and \texttt{betti3} is the third column of the graded
+Betti numbers, corresponding to the triangle/angle and bars calculations
+discussed above.
+
+The linear strand is the second (first non-trivial) row of the graded
+Betti numbers. There are two versions: an exact calculation, and a lower
+bound. The code always produces the exact result if the graph does
+not contain an induced $4$-cycle. If it does, then the result depends
+on whether \texttt{linearStrand} was called with \texttt{exact=TRUE}.
+If so, it runs a (very slow) algorithm to compute the exact linear strand.
+If not, it runs a (slightly less slow, but still very slow) algorithm
+to obtain a lower bound.  It is almost always going to be 
+faster than computing the full MFR,
+though.
+
+<<>>=
+set.seed(3452356)
+g <- rchordal(10,20)
+h <- graph.complementer(g)
+mfr(g)
+linearStrand(g)
+mfr(h)
+linearStrand(h)
+@
+
+\section{Scan Statistics}
+
+In spite of all the effort to implement good algorithms to compute
+the MFR (both in the R/C code here and the Singular package) the
+fact is, the calculation of the MFR for graphs with more than a few
+tens of vertices is impractical.
+
+One way around this, is to give up on finding the MFR of the full
+graph, and instead think locally. A scan statistic on a graph is
+a graph invariant applied to a local region (in our case, the 1-neighborhood
+of a vertex). The local region is chosen to have some maximal property
+(such as size of the induced subgraph), and \texttt{scanMFR}
+returns the the MFR of this induced subgraph.
+
+There's good news and bad news about scan statistics. First, the induced
+subgraph is the star of the induced subgraph of the open neighborhood,
+and so we get a little savings there (the MFR of the star of a graph $g$
+can be computed easily from the MFR of $g$). The bad news is that unless
+these subgraphs are ``small'' we are still doomed.
+
+<<>>=
+set.seed(5383)
+g <- erdos.renyi.game(n=100,p=.1)
+m <- scanMFR(g)
+m
+@
+
+Note that in the above example, $\beta_{2,2}=\Sexpr{m$graded[2,2]}<100$.
+Even here there are limits. For example, in the above example, if we
+increase $n$ from $100$ to $1000$, Singular must be called, and the 
+estimated time to complete is sometime after the heat-death of the universe.
+We can attempt to compute just a few terms in the linear strand, but
+even here we may be biting off far more than we can chew.
+
+\end{document}
+

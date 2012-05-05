@@ -3,6 +3,8 @@
 #include <math.h>
 #include <time.h>
 #include <R.h>
+#include <Rdefines.h>
+#include <R_ext/Utils.h>
 
 
 #define max(x,y) (((x)>(y))?(x):(y))
@@ -19,6 +21,7 @@ typedef struct {
 	int pd,reg;
 	int nrow,ncol;
 	int emptygraph;
+	int notfound;
 } MFR;
 
 /* extern int **adjacency2edges(int **, int , int *); */
@@ -49,3 +52,5 @@ extern void removeIsolates(Graph *);
 extern int components(Graph *, int *);
 extern void copyGraph(Graph *, Graph *);
 void combineGraded(MFR *, MFR *);
+extern MFR *checkDataBase(Graph *);
+extern MFR *chordalComp(Graph *);

@@ -39,7 +39,7 @@ times and plots the results.
 \code{fit.timings} returns a linear model (via \code{lm}).
 }
 \author{
-David J. Marchette, dmarchette@gmail.com
+David J. Marchette, \email{dmarchette@gmail.com}
 }
 \note{
 If \code{ns} is too large, or \code{ps} is too large, or you don't have

@@ -1,11 +1,8 @@
 #include <string.h>
 #include "splitting.h"
 
-#ifdef __unix__ 
+/* this needs to be fixed for windows. */
 #define SINGULAR "Singular"
-#elif defined _WIN32 
-#define SINGULAR "bash.exe Singular"
-#endif
 
 extern int verbose;
 
@@ -73,7 +70,13 @@ MFR *singular(Graph *g, char *tempname, int quiet)
 			Rprintf("This may take a long time.\n");
 			t1 = exp(s/3-7.5367);
 			t2 = exp(0.3669*s-6.8894);
-			if(t1>120){
+			if(t1>86400){
+				Rprintf("A very crude estimate is: between %lf and %lf days.\n",
+				   t1/86400,t2/86400);
+			} else if(t1>3600){
+				Rprintf("A very crude estimate is: between %lf and %lf hours.\n",
+				   t1/3600,t2/3600);
+			} else if(t1>60){
 				Rprintf("A very crude estimate is: between %lf and %lf minutes.\n",
 				   t1/60,t2/60);
 			} else {
@@ -118,7 +121,8 @@ MFR *singular(Graph *g, char *tempname, int quiet)
 	pd = 0;
 	while(fgets(str,1000,fp) != NULL){
 	   if(strstr(str,"FB Mathematik")){
-		   junkc = fgets(str,1000,fp);
+		   junkc = fgets(str,1000,fp); 
+			if(junkc == NULL) break; /* mostly to keep Wall from complaining */
 			for(i=strlen(str)-2;str[i]!=' ';i--);
 			junk = sscanf(&str[i],"%d",&pd);
 			pd++;
@@ -146,7 +150,7 @@ MFR *singular(Graph *g, char *tempname, int quiet)
 			for(i=0;i<reg;i++){
 				junk = fscanf(fp,"%*d:");
 				for(j=0;j<=pd;j++){
-				   junk = fscanf(fp,"%ld",&M[i+1][j+1]);
+				   junk = fscanf(fp,"%lu",&M[i+1][j+1]);
 				}
 			}
 			break;

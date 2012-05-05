@@ -46,7 +46,7 @@ and edges are added at random until the graph is chordal.
 a chordal graph.
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
 }
 
 \seealso{

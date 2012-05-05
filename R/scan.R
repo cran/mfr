@@ -1,4 +1,5 @@
-scanMFR1 <- function(g,use.max=TRUE,...)
+scanMFR1 <- function(g,use.max=TRUE,
+                     linear.strand=FALSE,maxBetti=vcount(g),...)
 {
    n <- vcount(g)
 	out <- list(0)
@@ -6,19 +7,32 @@ scanMFR1 <- function(g,use.max=TRUE,...)
 	nr <- 1
 	nc <- 1
 	punted <- 0
-   for(i in 1:n){
-		if(i %in% v){
-			N <- neighborhood(g,order=1,nodes=i)[[1]]
-			out[[i]] <- mfr(subgraph(g,N),...)
+   for(i in v){
+		N <- neighborhood(g,order=1,nodes=i)[[1]]
+		if(length(N)==1){
+			out[[i+1]] <- list(bettis=1,pd=0,reg=1,graded=matrix(1,nrow=1),punted=0)
+			class(out[[i+1]]) <- c("mfr","exact")
+		} else {
+			h <- subgraph(g,N)
+			a <- checkDB(h)
+			if(is.null(a)){
+				if(linear.strand){
+					out[[i+1]] <- linearStrand(h,maxBetti=maxBetti)
+				} else {
+					out[[i+1]] <- MFRStar(subgraph(g,setdiff(N,i)),...)
+				}
+			} else {
+				if(linear.strand){
+					out[[i+1]] <- a[2,,drop=FALSE]
+				} else {
+					out[[i+1]] <- a
+				}
+			}
 		}
-		else{
-		   out[[i]] <- list(bettis=1,graded=matrix(1,nrow=1),pd=0,reg=1,punted=0)
-		}
-		nr <- max(nrow(out[[i]]$graded),nr)
-		nc <- max(ncol(out[[i]]$graded),nc)
-		punted <- out[[i]]$punted+punted
+		nr <- max(nrow(out[[i+1]]$graded),nr)
+		nc <- max(ncol(out[[i+1]]$graded),nc)
+		punted <- out[[i+1]]$punted+punted
 	}
-	punted <- 0
 	pd <- nc-1
 	reg <- nr
 	bettis <- rep(NA,nc)
@@ -59,32 +73,58 @@ scanMFR1 <- function(g,use.max=TRUE,...)
 	a
 }
 
-scanMFR <- function(g,method="size",...)
+scanMFR <- function(g,method="size",by.vertex=FALSE,
+						  linear.strand=FALSE,maxBetti=vcount(g),
+                    ...)
 {
+	if(ecount(g)==0) stop("The graph is empty")
 	N <- neighborhood(g,order=1)
 	M <- c("size","order","maximum","minimum")
 	meth <- pmatch(tolower(method),M)
 	if(is.na(meth)){
-	   stop("invalid method passed to scanMFR")
+		if(by.vertex){
+		   ind <- which.max(do.call(method,args=list(graph=g)))
+		} else {
+			ind <- which.max(unlist(lapply(N,
+		                  function(x) 
+								    do.call(method,args=list(graph=subgraph(g,x))))))
+		}
+		sub <- setdiff(N[[ind]],ind-1)
 	}
+	a <- NULL
    if(meth==1){
 	   ind <- which.max(unlist(lapply(N,function(x)ecount(subgraph(g,x)))))
-		h <- subgraph(g,N[[ind]])
-		a <- mfr(h,...)
-		a$method <- "By Size"
-		a$center <- ind-1
-		class(a) <- c("mfrScan","mfr")
+		sub <- N[[ind]]
 	} else if(meth==2){
 	   ind <- which.max(unlist(lapply(N,length)))
-		h <- subgraph(g,N[[ind]])
-		a <- mfr(h,...)
-		a$method <- "By Order"
+		sub <- N[[ind]]
+	} else if(meth==3){
+		a <- scanMFR1(g,use.max=TRUE,
+		              linear.strand=linear.strand,maxBetti=maxBetti,...)
+	} else if(meth==4){
+		a <- scanMFR1(g,use.max=FALSE,
+		              linear.strand=linear.strand,maxBetti=maxBetti,...)
+	}
+	if(is.null(a)){
+		h <- subgraph(g,sub)
+		a <- checkDB(h)
+		if(is.null(a)){
+			if(linear.strand){
+				a <- linearStrand(h,maxBetti=maxBetti)
+			} else {
+				h <- subgraph(g,setdiff(sub,ind-1))
+				a <- MFRStar(h,...)
+			}
+		} else {
+		   if(linear.strand){
+			   b <- a$graded[2,1:(min(ncol(a$graded),maxBetti+1))]
+				class(b) <- c("linear.strand","exact")
+				a <- b
+			}
+		}
+		a$method <- method
 		a$center <- ind-1
 		class(a) <- c("mfrScan","mfr")
-	} else if(meth==3){
-		a <- scanMFR1(g,use.max=TRUE,...)
-	} else if(meth==4){
-		a <- scanMFR1(g,use.max=FALSE,...)
 	}
 	a
 }

@@ -40,7 +40,7 @@ indicating whether the graph is chordal/complete etc.
 Douglas B. West, Introduction to Graph Theory, Prentice-Hall, 2001.
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
 }
 \note{
 If the graph is not chordal, \code{peo} still returns a list of vertices.

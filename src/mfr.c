@@ -3,10 +3,11 @@
 int verbose;
 extern int ATRANDOM;
 int APPROXBETTIS;
+int CHECKDATABASE;
 
 void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
          double *graded, int *pd, int *reg, int *punted, int *NOCODE,
-			int *atrandom,char **TEMPNAME, int *QUIET)
+			int *atrandom,char **TEMPNAME, int *QUIET, int *CHECKDB)
 {
 	int i,j,k,s=*S,n=*N;
 	MFR *mfr;
@@ -15,6 +16,8 @@ void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
 	int nocode=*NOCODE;
 	char *tempname;
 	int quiet=*QUIET;
+
+	CHECKDATABASE = *CHECKDB;
 
 	GetRNGstate();
 
@@ -34,8 +37,8 @@ void mfr(int *edges1, int *edges2, int *N, int *S, int *NC, int *V,
 	edges = Calloc(s,int *);
 	for(i=0;i<s;i++){
 	   edges[i] = Calloc(2,int);
-		edges[i][0] = edges1[i]-1;
-		edges[i][1] = edges2[i]-1;
+		edges[i][0] = edges1[i];
+		edges[i][1] = edges2[i];
 	}
    g = makeGraph(edges,s,n);
 

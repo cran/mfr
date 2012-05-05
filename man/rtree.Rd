@@ -21,7 +21,7 @@ This generates a random tree.
 a graph.
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
 }
 
 \seealso{

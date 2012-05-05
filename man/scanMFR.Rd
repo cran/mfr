@@ -9,7 +9,9 @@ Minimal free resolutions of scan regions.
 Computes the MFR of the neighborhood of each vertex.
 }
 \usage{
-scanMFR(g, method="size",...)
+scanMFR(g, method="size",by.vertex=FALSE,
+		  linear.strand=FALSE, maxBetti=vcount(g),
+        ...)
 }
 \arguments{
   \item{g}{
@@ -17,6 +19,17 @@ a graph.
 }
   \item{method}{
 a character string indicating the method of neighborhood selection.
+This is either one of "size","order","maximum","minimum", or the
+name of a graph invariant. If the latter, \code{method} must take a
+single parameter called "graph".
+}
+  \item{by.vertex}{
+logical. If TRUE, \code{method} is applied to the overall graph,
+returning a vector containing a single value for each vertex. Otherwise,
+\code{method} is applied to each neighborhood.
+}
+  \item{linear.strand,maxBetti}{
+if \code{linear.strand} is true, only \code{maxBetti} numbers of the linear strand are computed.
 }
   \item{\dots}{
 arguments passed to \code{mfr}
@@ -33,6 +46,15 @@ is the maximum/minimum
 value for each betti number (total or graded) over all the
 regions. In this case, the total betti numbers will NOT be the sum of the
 columns of the graded betti numbers.
+
+If method is not one of the above, it is assumed to be a graph invariant
+that takes a single parameter, "graph", and returns a number or vector. If 
+\code{by.vertex} is true, then \code{method} is applied to the full graph
+and is assumed to return a vector with a single value for each vertex.
+If \code{by.vertex} is FALSE, \code{method} is applied to each neighborhood,
+and is assumed to return a single value. In either case, the local
+region is defined to be the neighborhood of the vertex
+with the largest value.
 }
 \value{
 \code{scanMFR} returns
@@ -47,9 +69,11 @@ ideals", J. Algebra, 309, 405-425, 2007.
 Marchette and Johannsen, "Betti numbers of graphs".
 }
 \author{
-David Marchette, david.marchette@navy.mil
+David Marchette, \email{dmarchette@gmail.com}
 }
 \seealso{
-\code{\link{mfr}}
+\code{\link{mfr}},
+\code{\link{linearStrand}},
+\code{\link{neighborhood}}.
 }
 \keyword{ graphs }
