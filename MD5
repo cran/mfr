@@ -1,4 +1,4 @@
-8cc14eb0f1d83ffc0fd5f3146f2487a4 *DESCRIPTION
+ce53336ca5b63b1138ac278336de0ed0 *DESCRIPTION
 1b405a5ccdf2cb08a22cc1c2b3403efb *NAMESPACE
 fb1540e5f6f09df04fe7bc55bdcb94c0 *R/barbell.R
 f0af7991c61db8c47fb05418957929d1 *R/binomial.R
@@ -29,9 +29,9 @@ ff311bf8dddf914157b4c5158369db44 *R/splitting.R
 e16a7cdfebd5649532d1e52a7b86f138 *TODO
 3093e2326909e0534e85fa4f8943f838 *data/mfrDB.RData
 0229fb5c0ae7b03fa4dce0165f646437 *inst/doc/edgeideals.Rnw
-ec5d4a1cfdaa1dc4268f46b4b7a2b2bf *inst/doc/edgeideals.pdf
+d46a8f2c03beea95c9e735c441ed1796 *inst/doc/edgeideals.pdf
 3ea04e890a2183682b0ac1b6709e400c *inst/doc/mfr.Rnw
-339ff0012e3900b50172788c5f39b8c6 *inst/doc/mfr.pdf
+395f29f336bb4a149a16d895b705a918 *inst/doc/mfr.pdf
 8350e4a01e7b377d2d4c704dc92a773e *man/Star.Rd
 e9ac975d80a44e5d5c87319ddfcb5959 *man/checkDB.Rd
 fb21c994d9ab0599787bde128cdb63dd *man/chordal.comp.mfr.Rd
